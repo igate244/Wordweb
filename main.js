@@ -33,15 +33,15 @@ const formSection = document.getElementById("form-section");
 const toggleFormBtn = document.getElementById("toggle-form-button");
 const form = document.getElementById("quote-form");
 const listEl = document.getElementById("quotes-tbody");
-let submitBtn =
-  document.getElementById("submit-button") ||
-  (form ? form.querySelector('button[type="submit"]') : null);
+const submitBtn = document.getElementById("submit-button");
 
 let cachedQuotes = [];
 let currentSort = { key: "createdAt", asc: false };
 let editingId = null;
 
-// ▼ フォーム表示制御
+// ========== フォームの開閉関連 ==========
+
+// 新規追加用にフォームを開く
 function openFormForNew() {
   editingId = null;
   if (form) form.reset();
@@ -50,6 +50,7 @@ function openFormForNew() {
   if (toggleFormBtn) toggleFormBtn.textContent = "フォームを閉じる";
 }
 
+// 編集用にフォームを開く
 function openFormForEdit(q) {
   if (!form) return;
   document.getElementById("title").value = q.title ?? "";
@@ -61,6 +62,7 @@ function openFormForEdit(q) {
   if (toggleFormBtn) toggleFormBtn.textContent = "フォームを閉じる";
 }
 
+// フォームを閉じる
 function hideForm() {
   editingId = null;
   if (form) form.reset();
@@ -69,7 +71,7 @@ function hideForm() {
   if (toggleFormBtn) toggleFormBtn.textContent = "＋ 名言を追加";
 }
 
-// ▼ トグルボタン
+// 「＋ 名言を追加」ボタンのイベント
 if (toggleFormBtn) {
   toggleFormBtn.addEventListener("click", () => {
     if (!formSection) return;
@@ -82,7 +84,8 @@ if (toggleFormBtn) {
   });
 }
 
-// ▼ 名言追加 / 更新
+// ========== 追加・更新 ==========
+
 if (form) {
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -108,7 +111,7 @@ if (form) {
         });
       }
 
-      hideForm();     // 送信後はいったん閉じる
+      hideForm();        // 送信後は閉じる
       await loadQuotes();
     } catch (err) {
       console.error("保存・更新に失敗しました:", err);
@@ -117,7 +120,8 @@ if (form) {
   });
 }
 
-// ▼ 一覧取得
+// ========== Firestoreから取得 & ソート & 描画 ==========
+
 async function loadQuotes() {
   const q = query(collection(db, "quotes"), orderBy("createdAt", "desc"));
   const snapshot = await getDocs(q);
@@ -129,7 +133,6 @@ async function loadQuotes() {
   applySort();
 }
 
-// ▼ 並び替え適用
 function applySort() {
   let arr = [...cachedQuotes];
 
@@ -154,7 +157,6 @@ function applySort() {
   renderTable(arr);
 }
 
-// ▼ テーブル描画
 function renderTable(arr) {
   if (!listEl) return;
   listEl.innerHTML = "";
@@ -192,7 +194,8 @@ function renderTable(arr) {
   });
 }
 
-// ▼ 行の編集・削除
+// ========== 行の編集・削除 ==========
+
 if (listEl) {
   listEl.addEventListener("click", async (e) => {
     const target = e.target;
@@ -224,9 +227,10 @@ if (listEl) {
   });
 }
 
-// ▼ ヘッダークリック → ソート切替
+// ========== ヘッダークリックでソート ==========
+
 document.querySelectorAll("thead th").forEach((th, idx) => {
-  const keys = ["title", "character", "text", "createdAt"]; // 操作列は対象外
+  const keys = ["title", "character", "text", "createdAt"]; // 操作列は除外
   const key = keys[idx];
   if (!key) return;
 
