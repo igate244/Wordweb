@@ -25,16 +25,14 @@ import {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ▼ フォーム & 一覧テーブル
+// ▼ フォーム & テーブル
 const form = document.getElementById("quote-form");
 const listEl = document.getElementById("quotes-tbody");
 
-// 念のため存在チェック（デバッグ用）
-if (!listEl) {
-  console.error("quotes-tbody が見つかりません。index.html の tbody の id を確認してください。");
-}
+let cachedQuotes = [];
+let currentSort = { key: "createdAt", asc: false };
 
-// ▼ 名言を追加
+// ▼ 名言追加
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -47,40 +45,74 @@ form.addEventListener("submit", async (e) => {
       title,
       character,
       text,
-      createdAt: serverTimestamp(), // サーバー時刻で登録
+      createdAt: serverTimestamp(),
     });
 
     form.reset();
     await loadQuotes();
   } catch (err) {
-    console.error("保存に失敗しました:", err);
-    alert("保存に失敗しました…コンソールを確認してください。");
+    console.error("保存失敗:", err);
+    alert("保存に失敗しました");
   }
 });
 
-// ▼ 一覧表示
+// ▼ 一覧取得
 async function loadQuotes() {
-  if (!listEl) return; // 安全策
-
-  listEl.innerHTML = "";
-
   const q = query(collection(db, "quotes"), orderBy("createdAt", "desc"));
   const snapshot = await getDocs(q);
 
-  snapshot.forEach((doc) => {
-    const data = doc.data();
+  cachedQuotes = snapshot.docs.map(doc => {
+    return { id: doc.id, ...doc.data() };
+  });
+
+  applySort();
+}
+
+// ▼ 並び替え適用
+function applySort() {
+  let arr = [...cachedQuotes];
+
+  arr.sort((a, b) => {
+    const k = currentSort.key;
+    const dir = currentSort.asc ? 1 : -1;
+
+    let av = a[k];
+    let bv = b[k];
+
+    if (av?.toDate) av = av.toDate();
+    if (bv?.toDate) bv = bv.toDate();
+
+    if (typeof av === "string") av = av.toLowerCase();
+    if (typeof bv === "string") bv = bv.toLowerCase();
+
+    if (av < bv) return -1 * dir;
+    if (av > bv) return 1 * dir;
+    return 0;
+  });
+
+  renderTable(arr);
+}
+
+// ▼ テーブル描画
+function renderTable(arr) {
+  listEl.innerHTML = "";
+
+  arr.forEach((data) => {
     const tr = document.createElement("tr");
 
-    // 登録日時の整形
     let createdStr = "";
-    if (data.createdAt && data.createdAt.toDate) {
+    if (data.createdAt?.toDate) {
       const d = data.createdAt.toDate();
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth() + 1).padStart(2, "0");
-      const dd = String(d.getDate()).padStart(2, "0");
-      const hh = String(d.getHours()).padStart(2, "0");
-      const mi = String(d.getMinutes()).padStart(2, "0");
-      createdStr = `${yyyy}/${mm}/${dd} ${hh}:${mi}`;
+      createdStr =
+        `${d.getFullYear()}` +
+        "/" +
+        String(d.getMonth() + 1).padStart(2, "0") +
+        "/" +
+        String(d.getDate()).padStart(2, "0") +
+        " " +
+        String(d.getHours()).padStart(2, "0") +
+        ":" +
+        String(d.getMinutes()).padStart(2, "0");
     }
 
     tr.innerHTML = `
@@ -94,9 +126,25 @@ async function loadQuotes() {
   });
 }
 
-// ▼ 初回読み込み
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", loadQuotes);
-} else {
-  loadQuotes();
-}
+
+// ▼ ヘッダークリック → ソート切替
+document.querySelectorAll("th").forEach((th, idx) => {
+  const keys = ["title", "character", "text", "createdAt"];
+
+  th.style.cursor = "pointer";
+
+  th.addEventListener("click", () => {
+    const k = keys[idx];
+
+    if (currentSort.key === k) {
+      currentSort.asc = !currentSort.asc;
+    } else {
+      currentSort.key = k;
+      currentSort.asc = true;
+    }
+    applySort();
+  });
+});
+
+// ▼ 初回実行
+loadQuotes();
