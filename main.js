@@ -1,4 +1,4 @@
-// ▼ Firebase設定（ここを自分の設定で書き換える）
+// ▼ Firebase設定
 const firebaseConfig = {
   apiKey: "AIzaSyCuAr6OulPDjQXV-Ylm5JYysT7uOHymOac",
   authDomain: "webword-2d1b2.firebaseapp.com",
@@ -9,6 +9,7 @@ const firebaseConfig = {
   measurementId: "G-SS2ZR9BY67"
 };
 
+// ▼ Firebase SDK 読み込み
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore,
@@ -16,18 +17,24 @@ import {
   addDoc,
   getDocs,
   query,
-  orderBy
+  orderBy,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// Firebase 初期化
+// ▼ Firebase 初期化
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// フォーム
+// ▼ フォーム & 一覧テーブル
 const form = document.getElementById("quote-form");
 const listEl = document.getElementById("quotes-tbody");
 
-// 送信
+// 念のため存在チェック（デバッグ用）
+if (!listEl) {
+  console.error("quotes-tbody が見つかりません。index.html の tbody の id を確認してください。");
+}
+
+// ▼ 名言を追加
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -35,19 +42,26 @@ form.addEventListener("submit", async (e) => {
   const character = document.getElementById("character").value;
   const text = document.getElementById("text").value;
 
-  await addDoc(collection(db, "quotes"), {
-    title,
-    character,
-    text,
-    createdAt: new Date()
-  });
+  try {
+    await addDoc(collection(db, "quotes"), {
+      title,
+      character,
+      text,
+      createdAt: serverTimestamp(), // サーバー時刻で登録
+    });
 
-  form.reset();
-  loadQuotes();
+    form.reset();
+    await loadQuotes();
+  } catch (err) {
+    console.error("保存に失敗しました:", err);
+    alert("保存に失敗しました…コンソールを確認してください。");
+  }
 });
 
-// 一覧表示
-asyasync function loadQuotes() {
+// ▼ 一覧表示
+async function loadQuotes() {
+  if (!listEl) return; // 安全策
+
   listEl.innerHTML = "";
 
   const q = query(collection(db, "quotes"), orderBy("createdAt", "desc"));
@@ -79,17 +93,10 @@ asyasync function loadQuotes() {
     listEl.appendChild(tr);
   });
 }
-tEl.innerHTML = "";
 
-  const q = query(collection(db, "quotes"), orderBy("createdAt", "desc"));
-  const snapshot = await getDocs(q);
-
-  snapshot.forEach((doc) => {
-    const data = doc.data();
-    const li = document.createElement("li");
-    li.textContent = `【${data.title}】${data.character}：「${data.text}」`;
-    listEl.appendChild(li);
-  });
+// ▼ 初回読み込み
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", loadQuotes);
+} else {
+  loadQuotes();
 }
-
-loadQuotes();
