@@ -6,61 +6,222 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <style>
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      padding: 16px;
-      line-height: 1.6;
+    :root {
+      --bg: #f3f4f6;
+      --card-bg: #ffffff;
+      --accent: #4f46e5;
+      --accent-soft: #eef2ff;
+      --border: #e5e7eb;
+      --text-main: #111827;
+      --text-sub: #6b7280;
     }
 
-    h1 {
-      margin-top: 0;
-      margin-bottom: 16px;
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top left, #e0e7ff, var(--bg));
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      padding: 24px 12px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1000px;
+      background: var(--card-bg);
+      border-radius: 16px;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+      padding: 24px 20px 28px;
+    }
+
+    @media (min-width: 768px) {
+      .container {
+        padding: 28px 32px 32px;
+      }
+    }
+
+    header {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 20px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: 0.08em;
+    }
+
+    header p {
+      margin: 0;
+      font-size: 13px;
+      color: var(--text-sub);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    @media (min-width: 840px) {
+      .layout {
+        grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+        align-items: flex-start;
+      }
+    }
+
+    .card {
+      background: linear-gradient(135deg, #f9fafb, #eef2ff);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      padding: 16px 16px 18px;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .card-title span.sub {
+      font-size: 11px;
+      color: var(--text-sub);
+      font-weight: 400;
     }
 
     form {
-      margin-bottom: 24px;
-      max-width: 480px;
+      margin-top: 8px;
+    }
+
+    .field {
+      margin-bottom: 10px;
     }
 
     label {
-      display: inline-block;
-      min-width: 70px;
+      display: block;
+      font-size: 12px;
+      margin-bottom: 2px;
+      color: var(--text-sub);
     }
 
     input[type="text"],
     textarea {
       width: 100%;
-      box-sizing: border-box;
-      margin-top: 4px;
-      margin-bottom: 12px;
+      padding: 6px 8px;
+      font-size: 13px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      outline: none;
+      background: #ffffff;
+      transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+      resize: vertical;
     }
 
-    button {
-      padding: 4px 12px;
+    input[type="text"]:focus,
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.35);
+      background: #f9fafb;
+    }
+
+    textarea {
+      min-height: 70px;
+    }
+
+    #submit-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: 999px;
+      border: none;
+      background: var(--accent);
+      color: #ffffff;
       cursor: pointer;
+      box-shadow: 0 8px 20px rgba(79, 70, 229, 0.35);
+      transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s;
+    }
+
+    #submit-button:hover {
+      transform: translateY(-1px);
+      background: #4338ca;
+      box-shadow: 0 12px 26px rgba(79, 70, 229, 0.4);
+    }
+
+    #submit-button:active {
+      transform: translateY(0);
+      box-shadow: 0 6px 14px rgba(79, 70, 229, 0.3);
+    }
+
+    h2 {
+      margin: 0 0 6px;
+      font-size: 16px;
+    }
+
+    .table-wrapper {
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      background: #f9fafb;
     }
 
     table {
       border-collapse: collapse;
       width: 100%;
-      max-width: 900px;
-      margin-top: 8px;
+      font-size: 13px;
+    }
+
+    thead {
+      background: var(--accent-soft);
     }
 
     th, td {
-      border: 1px solid #000;
-      padding: 4px 6px;
+      padding: 6px 8px;
+      border-bottom: 1px solid #e5e7eb;
       vertical-align: top;
-      font-size: 14px;
     }
 
     th {
-      background: #f0f0f0;
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+      color: var(--text-sub);
       white-space: nowrap;
     }
 
+    th.sortable {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    th.sortable::after {
+      content: " ⇅";
+      font-size: 10px;
+      color: #9ca3af;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #f3f4ff;
+    }
+
+    tbody tr:hover {
+      background: #e5e7ff;
+    }
+
     td:nth-child(3) {
-      /* セリフ欄は少し広めに */
       width: 50%;
     }
 
@@ -69,54 +230,100 @@
       text-align: center;
     }
 
-    th.sortable {
+    .actions button {
+      padding: 3px 8px;
+      font-size: 11px;
+      border-radius: 999px;
+      border: 1px solid transparent;
       cursor: pointer;
+      margin-left: 4px;
     }
 
-    th.sortable::after {
-      content: " ⇅";
-      font-size: 10px;
-      color: #666;
+    .actions .edit-btn {
+      background: #e0f2fe;
+      border-color: #7dd3fc;
+      color: #0369a1;
+    }
+
+    .actions .edit-btn:hover {
+      background: #bae6fd;
+    }
+
+    .actions .delete-btn {
+      background: #fee2e2;
+      border-color: #fecaca;
+      color: #b91c1c;
+    }
+
+    .actions .delete-btn:hover {
+      background: #fecaca;
+    }
+
+    .empty-hint {
+      font-size: 12px;
+      color: var(--text-sub);
+      padding: 8px 10px 10px;
     }
   </style>
 </head>
 <body>
+  <div class="container">
+    <header>
+      <h1>名言メモ</h1>
+      <p>漫画やアニメの「刺さったひと言」を、ゆるっとコレクション。</p>
+    </header>
 
-  <h1>名言メモ</h1>
+    <div class="layout">
+      <!-- 入力カード -->
+      <section class="card">
+        <div class="card-title">
+          <span>名言を追加</span>
+          <span class="sub">作品名＋キャラ名＋セリフ</span>
+        </div>
 
-  <form id="quote-form">
-    <div>
-      <label for="title">作品名：</label>
-      <input type="text" id="title" required>
+        <form id="quote-form">
+          <div class="field">
+            <label for="title">作品名</label>
+            <input type="text" id="title" required>
+          </div>
+
+          <div class="field">
+            <label for="character">キャラ名</label>
+            <input type="text" id="character" required>
+          </div>
+
+          <div class="field">
+            <label for="text">セリフ</label>
+            <textarea id="text" rows="3" required></textarea>
+          </div>
+
+          <button id="submit-button" type="submit">追加</button>
+        </form>
+      </section>
+
+      <!-- 一覧 -->
+      <section>
+        <h2>名言一覧</h2>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th class="sortable">作品名</th>
+                <th class="sortable">キャラ名</th>
+                <th class="sortable">セリフ</th>
+                <th class="sortable">登録日時</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="quotes-tbody"></tbody>
+          </table>
+          <div class="empty-hint">
+            ※ まだ名言がないときはここに何も表示されません。
+          </div>
+        </div>
+      </section>
     </div>
-
-    <div>
-      <label for="character">キャラ名：</label>
-      <input type="text" id="character" required>
-    </div>
-
-    <div>
-      <label for="text">セリフ：</label><br>
-      <textarea id="text" rows="3" required></textarea>
-    </div>
-
-    <button id="submit-button" type="submit">追加</button>
-  </form>
-
-  <h2>名言一覧</h2>
-
-  <table>
-    <thead>
-      <tr>
-        <th class="sortable">作品名</th>
-        <th class="sortable">キャラ名</th>
-        <th class="sortable">セリフ</th>
-        <th class="sortable">登録日時</th>
-        <th>操作</th>
-      </tr>
-    </thead>
-    <tbody id="quotes-tbody"></tbody>
-  </table>
+  </div>
 
   <script type="module" src="./main.js"></script>
 </body>
