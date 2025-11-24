@@ -62,27 +62,12 @@
       color: var(--text-sub);
     }
 
-    #toggle-form-button {
-      width: 100%;
-      margin: 8px 0 10px;
-      padding: 8px 12px;
-      font-size: 13px;
-      border-radius: 999px;
-      border: 1px solid var(--accent);
-      background: #ffffff;
-      color: var(--accent);
-      cursor: pointer;
-    }
-
-    #toggle-form-button:hover {
-      background: var(--accent-soft);
-    }
-
+    /* 入力フォームカード */
     .card {
       border-radius: 10px;
       border: 1px solid var(--border);
       background: #fafafa;
-      padding: 12px 12px 14px;
+      padding: 10px 12px 12px;
       margin-bottom: 12px;
     }
 
@@ -103,15 +88,24 @@
 
     form {
       margin-top: 4px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: flex-end;
     }
 
     .field {
-      margin-bottom: 10px;
+      flex: 1 1 140px;
+      min-width: 120px;
+    }
+
+    .field.text-field {
+      flex: 2 1 220px;
     }
 
     label {
       display: block;
-      font-size: 12px;
+      font-size: 11px;
       margin-bottom: 2px;
       color: var(--text-sub);
     }
@@ -119,8 +113,8 @@
     input[type="text"],
     textarea {
       width: 100%;
-      padding: 6px 8px;
-      font-size: 13px;
+      padding: 4px 6px;
+      font-size: 12px;
       border-radius: 8px;
       border: 1px solid var(--border);
       outline: none;
@@ -136,27 +130,29 @@
     }
 
     textarea {
-      min-height: 70px;
+      min-height: 40px;
+      max-height: 90px;
     }
 
     #submit-button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 6px 16px;
-      font-size: 13px;
+      flex: 0 0 auto;
+      margin-top: 18px;
+      padding: 6px 14px;
+      font-size: 12px;
       font-weight: 500;
       border-radius: 999px;
       border: none;
       background: var(--accent);
       color: #ffffff;
       cursor: pointer;
+      white-space: nowrap;
     }
 
     #submit-button:hover {
       background: #1d4ed8;
     }
 
+    /* 一覧テーブル */
     h2 {
       margin: 0 0 6px;
       font-size: 15px;
@@ -262,14 +258,11 @@
   <div class="container">
     <header>
       <h1>名言メモ</h1>
-      <p>まずは下のリストから眺めて、追加したくなったら「＋名言を追加」をタップ。</p>
+      <p>上で名言をサッと追加して、下の一覧で眺めるスタイル。</p>
     </header>
 
-    <!-- フォーム表示切替ボタン -->
-    <button id="toggle-form-button">＋ 名言を追加</button>
-
-    <!-- 追加フォーム（最初は非表示） -->
-    <section id="form-section" class="card" style="display:none;">
+    <!-- 入力フォーム（常に表示・コンパクト） -->
+    <section class="card">
       <div class="card-title">
         <span>名言を入力</span>
         <span class="sub">作品名＋キャラ名＋セリフ</span>
@@ -286,9 +279,9 @@
           <input type="text" id="character" required>
         </div>
 
-        <div class="field">
+        <div class="field text-field">
           <label for="text">セリフ</label>
-          <textarea id="text" rows="3" required></textarea>
+          <textarea id="text" rows="2" required></textarea>
         </div>
 
         <button id="submit-button" type="submit">追加</button>
