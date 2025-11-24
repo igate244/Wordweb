@@ -18,7 +18,10 @@ import {
   getDocs,
   query,
   orderBy,
-  serverTimestamp
+  serverTimestamp,
+  updateDoc,
+  deleteDoc,
+  doc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ▼ Firebase 初期化
@@ -28,11 +31,20 @@ const db = getFirestore(app);
 // ▼ フォーム & テーブル
 const form = document.getElementById("quote-form");
 const listEl = document.getElementById("quotes-tbody");
+const submitBtn = document.getElementById("submit-button");
 
 let cachedQuotes = [];
 let currentSort = { key: "createdAt", asc: false };
+let editingId = null;
 
-// ▼ 名言追加
+// ▼ フォームリセット
+function resetForm() {
+  form.reset();
+  editingId = null;
+  submitBtn.textContent = "追加";
+}
+
+// ▼ 名言追加 / 更新
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -41,18 +53,30 @@ form.addEventListener("submit", async (e) => {
   const text = document.getElementById("text").value;
 
   try {
-    await addDoc(collection(db, "quotes"), {
-      title,
-      character,
-      text,
-      createdAt: serverTimestamp(),
-    });
+    if (editingId) {
+      // 更新
+      const ref = doc(db, "quotes", editingId);
+      await updateDoc(ref, {
+        title,
+        character,
+        text
+        // createdAt はそのまま
+      });
+    } else {
+      // 新規追加
+      await addDoc(collection(db, "quotes"), {
+        title,
+        character,
+        text,
+        createdAt: serverTimestamp(),
+      });
+    }
 
-    form.reset();
+    resetForm();
     await loadQuotes();
   } catch (err) {
-    console.error("保存失敗:", err);
-    alert("保存に失敗しました");
+    console.error("保存・更新に失敗しました:", err);
+    alert("保存または更新に失敗しました。コンソールを確認してください。");
   }
 });
 
@@ -61,8 +85,8 @@ async function loadQuotes() {
   const q = query(collection(db, "quotes"), orderBy("createdAt", "desc"));
   const snapshot = await getDocs(q);
 
-  cachedQuotes = snapshot.docs.map(doc => {
-    return { id: doc.id, ...doc.data() };
+  cachedQuotes = snapshot.docs.map(docSnap => {
+    return { id: docSnap.id, ...docSnap.data() };
   });
 
   applySort();
@@ -120,26 +144,67 @@ function renderTable(arr) {
       <td>${data.character ?? ""}</td>
       <td>${data.text ?? ""}</td>
       <td>${createdStr}</td>
+      <td class="actions">
+        <button type="button" class="edit-btn" data-id="${data.id}">編集</button>
+        <button type="button" class="delete-btn" data-id="${data.id}">削除</button>
+      </td>
     `;
 
     listEl.appendChild(tr);
   });
 }
 
+// ▼ 行の編集・削除（イベント委譲）
+listEl.addEventListener("click", async (e) => {
+  const target = e.target;
+  if (!(target instanceof HTMLElement)) return;
+
+  const id = target.dataset.id;
+  if (!id) return;
+
+  if (target.classList.contains("edit-btn")) {
+    // 編集モードに切替
+    const q = cachedQuotes.find(item => item.id === id);
+    if (!q) return;
+
+    document.getElementById("title").value = q.title ?? "";
+    document.getElementById("character").value = q.character ?? "";
+    document.getElementById("text").value = q.text ?? "";
+    editingId = id;
+    submitBtn.textContent = "更新";
+
+  } else if (target.classList.contains("delete-btn")) {
+    // 削除
+    const ok = window.confirm("この名言を削除しますか？");
+    if (!ok) return;
+
+    try {
+      await deleteDoc(doc(db, "quotes", id));
+      if (editingId === id) {
+        resetForm();
+      }
+      await loadQuotes();
+    } catch (err) {
+      console.error("削除に失敗しました:", err);
+      alert("削除に失敗しました。コンソールを確認してください。");
+    }
+  }
+});
 
 // ▼ ヘッダークリック → ソート切替
 document.querySelectorAll("th").forEach((th, idx) => {
-  const keys = ["title", "character", "text", "createdAt"];
+  const keys = ["title", "character", "text", "createdAt"]; // 操作列は対象外
+  const key = keys[idx];
 
-  th.style.cursor = "pointer";
+  if (!key) return; // 5列目（操作）はソートなし
+
+  th.classList.add("sortable");
 
   th.addEventListener("click", () => {
-    const k = keys[idx];
-
-    if (currentSort.key === k) {
+    if (currentSort.key === key) {
       currentSort.asc = !currentSort.asc;
     } else {
-      currentSort.key = k;
+      currentSort.key = key;
       currentSort.asc = true;
     }
     applySort();
