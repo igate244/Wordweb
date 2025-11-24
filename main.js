@@ -29,8 +29,6 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // ▼ DOM取得
-const formSection = document.getElementById("form-section");
-const toggleFormBtn = document.getElementById("toggle-form-button");
 const form = document.getElementById("quote-form");
 const listEl = document.getElementById("quotes-tbody");
 const submitBtn = document.getElementById("submit-button");
@@ -39,53 +37,15 @@ let cachedQuotes = [];
 let currentSort = { key: "createdAt", asc: false };
 let editingId = null;
 
-// ========== フォームの開閉関連 ==========
-
-// 新規追加用にフォームを開く
-function openFormForNew() {
-  editingId = null;
-  if (form) form.reset();
-  if (submitBtn) submitBtn.textContent = "追加";
-  if (formSection) formSection.style.display = "block";
-  if (toggleFormBtn) toggleFormBtn.textContent = "フォームを閉じる";
-}
-
-// 編集用にフォームを開く
-function openFormForEdit(q) {
+// ▼ フォームリセット
+function resetForm() {
   if (!form) return;
-  document.getElementById("title").value = q.title ?? "";
-  document.getElementById("character").value = q.character ?? "";
-  document.getElementById("text").value = q.text ?? "";
-  editingId = q.id;
-  if (submitBtn) submitBtn.textContent = "更新";
-  if (formSection) formSection.style.display = "block";
-  if (toggleFormBtn) toggleFormBtn.textContent = "フォームを閉じる";
-}
-
-// フォームを閉じる
-function hideForm() {
+  form.reset();
   editingId = null;
-  if (form) form.reset();
   if (submitBtn) submitBtn.textContent = "追加";
-  if (formSection) formSection.style.display = "none";
-  if (toggleFormBtn) toggleFormBtn.textContent = "＋ 名言を追加";
 }
 
-// 「＋ 名言を追加」ボタンのイベント
-if (toggleFormBtn) {
-  toggleFormBtn.addEventListener("click", () => {
-    if (!formSection) return;
-    const visible = formSection.style.display === "block";
-    if (visible) {
-      hideForm();
-    } else {
-      openFormForNew();
-    }
-  });
-}
-
-// ========== 追加・更新 ==========
-
+// ▼ 追加 / 更新
 if (form) {
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -97,11 +57,7 @@ if (form) {
     try {
       if (editingId) {
         const ref = doc(db, "quotes", editingId);
-        await updateDoc(ref, {
-          title,
-          character,
-          text
-        });
+        await updateDoc(ref, { title, character, text });
       } else {
         await addDoc(collection(db, "quotes"), {
           title,
@@ -111,7 +67,7 @@ if (form) {
         });
       }
 
-      hideForm();        // 送信後は閉じる
+      resetForm();
       await loadQuotes();
     } catch (err) {
       console.error("保存・更新に失敗しました:", err);
@@ -120,8 +76,7 @@ if (form) {
   });
 }
 
-// ========== Firestoreから取得 & ソート & 描画 ==========
-
+// ▼ Firestoreから取得
 async function loadQuotes() {
   const q = query(collection(db, "quotes"), orderBy("createdAt", "desc"));
   const snapshot = await getDocs(q);
@@ -133,6 +88,7 @@ async function loadQuotes() {
   applySort();
 }
 
+// ▼ ソート適用
 function applySort() {
   let arr = [...cachedQuotes];
 
@@ -157,6 +113,7 @@ function applySort() {
   renderTable(arr);
 }
 
+// ▼ テーブル描画
 function renderTable(arr) {
   if (!listEl) return;
   listEl.innerHTML = "";
@@ -194,8 +151,7 @@ function renderTable(arr) {
   });
 }
 
-// ========== 行の編集・削除 ==========
-
+// ▼ 行の編集・削除
 if (listEl) {
   listEl.addEventListener("click", async (e) => {
     const target = e.target;
@@ -207,7 +163,12 @@ if (listEl) {
     if (target.classList.contains("edit-btn")) {
       const q = cachedQuotes.find(item => item.id === id);
       if (!q) return;
-      openFormForEdit(q);
+
+      document.getElementById("title").value = q.title ?? "";
+      document.getElementById("character").value = q.character ?? "";
+      document.getElementById("text").value = q.text ?? "";
+      editingId = q.id;
+      if (submitBtn) submitBtn.textContent = "更新";
 
     } else if (target.classList.contains("delete-btn")) {
       const ok = window.confirm("この名言を削除しますか？");
@@ -216,7 +177,7 @@ if (listEl) {
       try {
         await deleteDoc(doc(db, "quotes", id));
         if (editingId === id) {
-          hideForm();
+          resetForm();
         }
         await loadQuotes();
       } catch (err) {
@@ -227,8 +188,7 @@ if (listEl) {
   });
 }
 
-// ========== ヘッダークリックでソート ==========
-
+// ▼ ヘッダークリックでソート
 document.querySelectorAll("thead th").forEach((th, idx) => {
   const keys = ["title", "character", "text", "createdAt"]; // 操作列は除外
   const key = keys[idx];
@@ -246,5 +206,5 @@ document.querySelectorAll("thead th").forEach((th, idx) => {
   });
 });
 
-// ▼ 初回実行
+// ▼ 初回読み込み
 loadQuotes();
