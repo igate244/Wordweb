@@ -44,12 +44,14 @@
       border-collapse: collapse;
       width: 100%;
       max-width: 900px;
+      margin-top: 8px;
     }
 
     th, td {
       border: 1px solid #000;
       padding: 4px 6px;
       vertical-align: top;
+      font-size: 14px;
     }
 
     th {
@@ -60,6 +62,21 @@
     td:nth-child(3) {
       /* セリフ欄は少し広めに */
       width: 50%;
+    }
+
+    td.actions {
+      white-space: nowrap;
+      text-align: center;
+    }
+
+    th.sortable {
+      cursor: pointer;
+    }
+
+    th.sortable::after {
+      content: " ⇅";
+      font-size: 10px;
+      color: #666;
     }
   </style>
 </head>
@@ -83,7 +100,7 @@
       <textarea id="text" rows="3" required></textarea>
     </div>
 
-    <button type="submit">追加</button>
+    <button id="submit-button" type="submit">追加</button>
   </form>
 
   <h2>名言一覧</h2>
@@ -91,10 +108,11 @@
   <table>
     <thead>
       <tr>
-        <th>作品名</th>
-        <th>キャラ名</th>
-        <th>セリフ</th>
-        <th>登録日時</th>
+        <th class="sortable">作品名</th>
+        <th class="sortable">キャラ名</th>
+        <th class="sortable">セリフ</th>
+        <th class="sortable">登録日時</th>
+        <th>操作</th>
       </tr>
     </thead>
     <tbody id="quotes-tbody"></tbody>
