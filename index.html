@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>名言メモ</title>
+</head>
+<body>
+  <h1>名言メモ</h1>
+
+  <form id="quote-form">
+    <div>
+      <label>作品名：</label>
+      <input type="text" id="title" required>
+    </div>
+    <div>
+      <label>キャラ名：</label>
+      <input type="text" id="character" required>
+    </div>
+    <div>
+      <label>セリフ：</label><br>
+      <textarea id="text" rows="3" required></textarea>
+    </div>
+    <button type="submit">追加</button>
+  </form>
+
+  <h2>名言一覧</h2>
+  <ul id="quotes-list"></ul>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
