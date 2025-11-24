@@ -28,11 +28,11 @@ import {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ▼ フォーム & テーブル
+// ▼ DOM取得
+const formSection = document.getElementById("form-section");
+const toggleFormBtn = document.getElementById("toggle-form-button");
 const form = document.getElementById("quote-form");
 const listEl = document.getElementById("quotes-tbody");
-
-// 送信ボタン（見つからない時は null のままでも落ちないようにする）
 let submitBtn =
   document.getElementById("submit-button") ||
   (form ? form.querySelector('button[type="submit"]') : null);
@@ -41,12 +41,45 @@ let cachedQuotes = [];
 let currentSort = { key: "createdAt", asc: false };
 let editingId = null;
 
-// ▼ フォームリセット
-function resetForm() {
-  if (!form) return;
-  form.reset();
+// ▼ フォーム表示制御
+function openFormForNew() {
   editingId = null;
+  if (form) form.reset();
   if (submitBtn) submitBtn.textContent = "追加";
+  if (formSection) formSection.style.display = "block";
+  if (toggleFormBtn) toggleFormBtn.textContent = "フォームを閉じる";
+}
+
+function openFormForEdit(q) {
+  if (!form) return;
+  document.getElementById("title").value = q.title ?? "";
+  document.getElementById("character").value = q.character ?? "";
+  document.getElementById("text").value = q.text ?? "";
+  editingId = q.id;
+  if (submitBtn) submitBtn.textContent = "更新";
+  if (formSection) formSection.style.display = "block";
+  if (toggleFormBtn) toggleFormBtn.textContent = "フォームを閉じる";
+}
+
+function hideForm() {
+  editingId = null;
+  if (form) form.reset();
+  if (submitBtn) submitBtn.textContent = "追加";
+  if (formSection) formSection.style.display = "none";
+  if (toggleFormBtn) toggleFormBtn.textContent = "＋ 名言を追加";
+}
+
+// ▼ トグルボタン
+if (toggleFormBtn) {
+  toggleFormBtn.addEventListener("click", () => {
+    if (!formSection) return;
+    const visible = formSection.style.display === "block";
+    if (visible) {
+      hideForm();
+    } else {
+      openFormForNew();
+    }
+  });
 }
 
 // ▼ 名言追加 / 更新
@@ -60,16 +93,13 @@ if (form) {
 
     try {
       if (editingId) {
-        // 更新
         const ref = doc(db, "quotes", editingId);
         await updateDoc(ref, {
           title,
           character,
           text
-          // createdAt はそのまま
         });
       } else {
-        // 新規追加
         await addDoc(collection(db, "quotes"), {
           title,
           character,
@@ -78,7 +108,7 @@ if (form) {
         });
       }
 
-      resetForm();
+      hideForm();     // 送信後はいったん閉じる
       await loadQuotes();
     } catch (err) {
       console.error("保存・更新に失敗しました:", err);
@@ -127,7 +157,6 @@ function applySort() {
 // ▼ テーブル描画
 function renderTable(arr) {
   if (!listEl) return;
-
   listEl.innerHTML = "";
 
   arr.forEach((data) => {
@@ -163,7 +192,7 @@ function renderTable(arr) {
   });
 }
 
-// ▼ 行の編集・削除（イベント委譲）
+// ▼ 行の編集・削除
 if (listEl) {
   listEl.addEventListener("click", async (e) => {
     const target = e.target;
@@ -173,25 +202,18 @@ if (listEl) {
     if (!id) return;
 
     if (target.classList.contains("edit-btn")) {
-      // 編集モードに切替
       const q = cachedQuotes.find(item => item.id === id);
       if (!q) return;
-
-      document.getElementById("title").value = q.title ?? "";
-      document.getElementById("character").value = q.character ?? "";
-      document.getElementById("text").value = q.text ?? "";
-      editingId = id;
-      if (submitBtn) submitBtn.textContent = "更新";
+      openFormForEdit(q);
 
     } else if (target.classList.contains("delete-btn")) {
-      // 削除
       const ok = window.confirm("この名言を削除しますか？");
       if (!ok) return;
 
       try {
         await deleteDoc(doc(db, "quotes", id));
         if (editingId === id) {
-          resetForm();
+          hideForm();
         }
         await loadQuotes();
       } catch (err) {
@@ -204,13 +226,11 @@ if (listEl) {
 
 // ▼ ヘッダークリック → ソート切替
 document.querySelectorAll("thead th").forEach((th, idx) => {
-  const keys = ["title", "character", "text", "createdAt"]; // 5列目（操作）は除外
+  const keys = ["title", "character", "text", "createdAt"]; // 操作列は対象外
   const key = keys[idx];
-
-  if (!key) return; // 操作列
+  if (!key) return;
 
   th.classList.add("sortable");
-
   th.addEventListener("click", () => {
     if (currentSort.key === key) {
       currentSort.asc = !currentSort.asc;
