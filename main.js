@@ -25,7 +25,7 @@ const db = getFirestore(app);
 
 // フォーム
 const form = document.getElementById("quote-form");
-const listEl = document.getElementById("quotes-list");
+const listEl = document.getElementById("quotes-tbody");
 
 // 送信
 form.addEventListener("submit", async (e) => {
@@ -47,8 +47,39 @@ form.addEventListener("submit", async (e) => {
 });
 
 // 一覧表示
-async function loadQuotes() {
+asyasync function loadQuotes() {
   listEl.innerHTML = "";
+
+  const q = query(collection(db, "quotes"), orderBy("createdAt", "desc"));
+  const snapshot = await getDocs(q);
+
+  snapshot.forEach((doc) => {
+    const data = doc.data();
+    const tr = document.createElement("tr");
+
+    // 登録日時の整形
+    let createdStr = "";
+    if (data.createdAt && data.createdAt.toDate) {
+      const d = data.createdAt.toDate();
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      const hh = String(d.getHours()).padStart(2, "0");
+      const mi = String(d.getMinutes()).padStart(2, "0");
+      createdStr = `${yyyy}/${mm}/${dd} ${hh}:${mi}`;
+    }
+
+    tr.innerHTML = `
+      <td>${data.title ?? ""}</td>
+      <td>${data.character ?? ""}</td>
+      <td>${data.text ?? ""}</td>
+      <td>${createdStr}</td>
+    `;
+
+    listEl.appendChild(tr);
+  });
+}
+tEl.innerHTML = "";
 
   const q = query(collection(db, "quotes"), orderBy("createdAt", "desc"));
   const snapshot = await getDocs(q);
